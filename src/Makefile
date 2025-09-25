@@ -10,7 +10,7 @@ CFLAGS = $(OPT) $(WARN) $(STD) $(INC) $(LIB)
 SIM_SRC = sim.cc
 
 # List corresponding compiled object files here (.o files)
-SIM_OBJ = sim.o
+SIM_OBJ = *.o
  
 #################################
 
