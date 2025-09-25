@@ -76,7 +76,9 @@ int main (int argc, char *argv[]) {
    //  }
 
    Cache* L1 = new Cache(params.BLOCKSIZE, params.L1_SIZE, params.L1_ASSOC);
+   Cache* L2 = new Cache(params.BLOCKSIZE, params.L2_SIZE, params.L2_ASSOC);
    addr = 0x3bCD;
+   L1->next_mem_hier = L2;
    L1->display();
    printf("tag of address = %x\n",L1->get_tag(addr=addr));
    printf("index of address = %x\n",L1->get_index(addr=addr));
