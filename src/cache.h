@@ -25,7 +25,7 @@ typedef struct
     uint32_t read_misses;
     uint32_t writes;
     uint32_t write_misses;
-    uint32_t miss_rate;
+    float miss_rate;
     uint32_t write_backs;
     uint32_t prefetches;
     
@@ -83,6 +83,7 @@ class Cache {
 
         //debug function to check if I'm passing and using the correct values
         void display();
+        void print_contents();
  
         //calculates all the cache properties 
         void calc_cache_properties();

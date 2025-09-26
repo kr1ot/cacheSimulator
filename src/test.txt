@@ -1,0 +1,30 @@
+===== Simulator configuration =====
+BLOCKSIZE:  16
+L1_SIZE:    1024
+L1_ASSOC:   64
+L2_SIZE:    0
+L2_ASSOC:   0
+PREF_N:     0
+PREF_M:     0
+trace_file: ../../moodle_data/traces/traces/gcc_trace.txt
+===== L1 contents =====
+set		 0:   4002758	   4002f4a	   40051a2 D	   4002763	   4003825 D	   40051ab D	   4001f51	   400358e	   400314b	   400519e D	   4001f2d	   40051c9 D	   7b03390 D	   400012e	   4003144	   400012b	   4003e58	   4000131	   4000132	   400012f	   4002f49 D	   4003158 D	   40051a3 D	   4000134	   4002f71 D	   40051a1 D	   400275c	   4000130	   4003559	   400275f	   4003824	   4003147	   40031e8 D	   4000133	   40031f8 D	   400275d	   40051ac D	   4003148	   4000136	   4001f29	   4003587 D	   400012d	   4004464 D	   4002762	   4001f30	   400012c	   4001f4a	   40051a4 D	   4003822 D	   4001f52	   4004824	   40051a0 D	   400314a	   40051ca D	   400519f D	   4004295	   4003577	   40051c8 D	   40031e9 D	   4003140	   4003f1f D	   4000135	   4001f4e	   4002a62 D	
+
+===== Measurements =====
+a. L1 reads:                   63640
+b. L1 read misses:             6512
+c. L1 writes:                  36360
+d. L1 write misses:            7658
+e. L1 miss rate:               0.000000
+f. L1 writebacks:              8330
+g. L1 prefetches:              0
+h. L2 reads (demand):          0
+i. L2 read misses (demand):    0
+j. L2 reads (prefetch):        0
+k. L2 read misses (prefetch):  0
+l. L2 writes:                  0
+m. L2 write misses:            0
+n. L2 miss rate:               0.0000
+o. L2 writebacks:              0
+p. L2 prefetches:              0
+q. memory traffic:             22500

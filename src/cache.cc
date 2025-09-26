@@ -109,10 +109,6 @@ void Cache::evict_and_update_lru(uint32_t tag, uint32_t lru_count_to_replace, ui
             {
                 cache[index][colms].dirty_flag = 1;
             }
-            else 
-            {
-                cache[index][colms].dirty_flag = 0;
-            }
         }
         //keep the value of lru_counter same for counter values greater than 
         //required count value
@@ -128,7 +124,7 @@ void Cache::request(uint32_t addr, char r_w){
     uint32_t lru_count_to_be_evicted = 0;
 
     //Debugs-
-    printf("%x\n",addr);
+    // printf("%x\n",addr);
 
     //check if the memory blocks misses in cache
     miss = is_miss(tag = tag, index = index);
@@ -139,17 +135,28 @@ void Cache::request(uint32_t addr, char r_w){
         //for read requests from upper hierarchy
         if (r_w == 'r')
         {
+            // printf("\t r: %x (tag = %x index=%u)\n",addr,tag,index);
+            // printf("\t before: set %u: %x\n",index,tag);
             cache_measurements.reads += 1;
             //check if the read request is a miss
             if (miss == true)
             {
                 cache_measurements.read_misses += 1;
-                //check before eviction, if the memory block at LRU was dirty
-                //dirty = 1 -> write back to main memory
-                if (cache[index][associativity-1].dirty_flag == 1)
+                //get the column whose lru_counter = associativity - 1
+                for (uint32_t colm =0; colm < associativity; colm++)
                 {
-                    cache_measurements.write_backs += 1;
+                    //check before eviction, if the memory block at LRU was dirty
+                    //dirty = 1 -> write back to main memory
+                    if (cache[index][colm].lru_counter == (associativity-1))
+                    {
+                        if (cache[index][colm].dirty_flag == 1){
+                            cache_measurements.write_backs += 1;
+                            cache[index][colm].dirty_flag = 0;
+                        }
+                        break;
+                    }
                 }
+                
                 lru_count_to_be_evicted = associativity-1;
             }
             //if the memory is hit in cache
@@ -160,26 +167,39 @@ void Cache::request(uint32_t addr, char r_w){
                 {
                     if (cache[index][colms].memory_block == tag){
                         lru_count_to_be_evicted = cache[index][colms].lru_counter;
+                        break;
                     }
                 }
             }
             //no explicit read issued to memory in the simulator for miss/hit
             //update the memory block and LRU with the new block 
-            evict_and_update_lru(addr,lru_count_to_be_evicted,index,'r');
+            evict_and_update_lru(tag,lru_count_to_be_evicted,index,'r');
+            // printf("\t after: set %u: %x\n",index,tag);
         }
         //write request from upper hierarchy
         else
         {
+            // printf("\t w: %x (tag = %x index=%u)\n",addr,tag,index);
             cache_measurements.writes += 1;
+            // printf("\t before: set %u: %x\n",index,tag);
             //check if the write request is a miss
             if (miss == true)
             {
                 cache_measurements.write_misses += 1;
-                //check before eviction if the memory block at LRU was dirty
-                if (cache[index][associativity-1].dirty_flag == 1)
+
+                //get the column whose lru_counter = associativity - 1
+                for (uint32_t colm =0; colm < associativity; colm++)
                 {
-                    //perform write back to memory
-                    cache_measurements.write_backs += 1;
+                    //check before eviction, if the memory block at LRU was dirty
+                    //dirty = 1 -> write back to main memory
+                    if (cache[index][colm].lru_counter == (associativity-1))
+                    {
+                        if (cache[index][colm].dirty_flag == 1){
+                            cache_measurements.write_backs += 1;
+                            cache[index][colm].dirty_flag = 0;
+                        }
+                        break;
+                    }
                 }
                 //eviction incase it was a write miss
                 lru_count_to_be_evicted = associativity-1;
@@ -194,10 +214,12 @@ void Cache::request(uint32_t addr, char r_w){
                 {
                     if (cache[index][colms].memory_block == tag){
                         lru_count_to_be_evicted = cache[index][colms].lru_counter;
+                        break;
                     }
                 }
             }
             evict_and_update_lru(tag,lru_count_to_be_evicted,index,'w');
+            // printf("\t after: set %u: %x D\n",index,tag);
         }
     }
     //if next memroy hierarchy exists
@@ -217,6 +239,7 @@ void Cache::request(uint32_t addr, char r_w){
                 {
                     cache_measurements.write_backs += 1;
                     next_mem_hier->request(addr,'w');
+                    cache[index][associativity-1].dirty_flag = 0;
                 }
                 //dirty flag is not set
                 else
@@ -254,6 +277,7 @@ void Cache::request(uint32_t addr, char r_w){
                     //perform write back to memory
                     cache_measurements.write_backs += 1;
                     next_mem_hier->request(addr,'w');
+                    cache[index][associativity-1].dirty_flag = 0;
                 }
                 //eviction incase it was a write miss
                 lru_count_to_be_evicted = associativity-1;
@@ -276,6 +300,25 @@ void Cache::request(uint32_t addr, char r_w){
     }
 }
 
+
+void Cache::print_contents()
+{
+    for (uint32_t set=0; set < number_of_sets; set++)
+    {
+        printf("set\t\t %u:",set);
+        for (uint32_t colm = 0; colm < associativity; colm++)
+        {
+            //check if the bit is dirty
+            if (cache[set][colm].dirty_flag == 1){
+                printf("   %x D\t",cache[set][colm].memory_block);
+            }
+            else{
+                printf("   %x\t",cache[set][colm].memory_block);
+            }
+        }
+        printf("\n");
+    }
+}
 
 void Cache::display(){
     printf("block_size = %u\n",block_size);

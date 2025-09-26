@@ -21,7 +21,7 @@ int main (int argc, char *argv[]) {
    cache_params_t params;	// Look at the sim.h header file for the definition of struct cache_params_t.
    char rw;			// This variable holds the request's type (read or write) obtained from the trace.
    uint32_t addr;		// This variable holds the request's address obtained from the trace.
-				// The header file <inttypes.h> above defines signed and unsigned integers of various sizes in a machine-agnostic way.  "uint32_t" is an unsigned integer of 32 bits.
+                // The header file <inttypes.h> above defines signed and unsigned integers of various sizes in a machine-agnostic way.  "uint32_t" is an unsigned integer of 32 bits.
 
    // Exit with an error if the number of command-line arguments is incorrect.
    if (argc != 9) {
@@ -57,7 +57,9 @@ int main (int argc, char *argv[]) {
    printf("PREF_N:     %u\n", params.PREF_N);
    printf("PREF_M:     %u\n", params.PREF_M);
    printf("trace_file: %s\n", trace_file);
-   printf("\n");
+   // printf("\n");
+   // printf("\n");
+   
 
    Cache* cache_l1 = new Cache(params.BLOCKSIZE, params.L1_SIZE, params.L1_ASSOC);
 
@@ -71,7 +73,7 @@ int main (int argc, char *argv[]) {
          cache_l1->request(addr,'w');
       else {
          printf("Error: Unknown request type %c.\n", rw);
-	 exit(EXIT_FAILURE);
+     exit(EXIT_FAILURE);
       }
 
       ///////////////////////////////////////////////////////
@@ -81,8 +83,30 @@ int main (int argc, char *argv[]) {
 
    // Cache* L2 = new Cache(params.BLOCKSIZE, params.L2_SIZE, params.L2_ASSOC);
    // L1->next_mem_hier = L2;
-   cache_l1->display();
-   // printf("tag of address = %x\n",L1->get_tag(addr=addr));
-   // printf("index of address = %x\n",L1->get_index(addr=addr));
-   return(0);
+    printf("===== L1 contents =====\n");
+    cache_l1->print_contents();
+    uint32_t memory_traffic = 0;
+    memory_traffic = cache_l1->cache_measurements.write_backs + cache_l1->cache_measurements.read_misses + cache_l1->cache_measurements.write_misses;
+    printf("\n");
+    printf("===== Measurements =====\n");
+    printf("a. L1 reads:                   %u\n",cache_l1->cache_measurements.reads);
+    printf("b. L1 read misses:             %u\n",cache_l1->cache_measurements.read_misses);
+    printf("c. L1 writes:                  %u\n",cache_l1->cache_measurements.writes);
+    printf("d. L1 write misses:            %u\n",cache_l1->cache_measurements.write_misses);
+    printf("e. L1 miss rate:               %f\n",cache_l1->cache_measurements.miss_rate);
+    printf("f. L1 writebacks:              %u\n",cache_l1->cache_measurements.write_backs);
+    printf("g. L1 prefetches:              %u\n",cache_l1->cache_measurements.prefetches);
+    printf("h. L2 reads (demand):          0\n");
+    printf("i. L2 read misses (demand):    0\n");
+    printf("j. L2 reads (prefetch):        0\n");
+    printf("k. L2 read misses (prefetch):  0\n");
+    printf("l. L2 writes:                  0\n");
+    printf("m. L2 write misses:            0\n");
+    printf("n. L2 miss rate:               0.0000\n");
+    printf("o. L2 writebacks:              0\n");
+    printf("p. L2 prefetches:              0\n");
+    printf("q. memory traffic:             %u\n",memory_traffic);
+    // printf("tag of address = %x\n",L1->get_tag(addr=addr));
+    // printf("index of address = %x\n",L1->get_index(addr=addr));
+    return(0);
 }
