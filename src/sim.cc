@@ -61,7 +61,24 @@ int main (int argc, char *argv[]) {
    // printf("\n");
    
 
-   Cache* cache_l1 = new Cache(params.BLOCKSIZE, params.L1_SIZE, params.L1_ASSOC);
+    Cache* cache_l1 = new Cache(params.BLOCKSIZE, params.L1_SIZE, params.L1_ASSOC);
+    Cache* cache_l2 = new Cache(params.BLOCKSIZE, params.L2_SIZE, params.L2_ASSOC);
+
+    // cache_l1->display();
+    // cache_l2->display();
+   //based on the L2 size paramenter, decide whether L2 is present
+   bool l2_exists = false;
+
+   if (params.L2_SIZE != 0)
+   {
+       l2_exists = true;
+   }
+
+   if (l2_exists == true)
+   {
+       
+       cache_l1->next_mem_hier = cache_l2;
+   }
 
    // Read requests from the trace file and echo them back.
    while (fscanf(fp, "%c %x\n", &rw, &addr) == 2) {	// Stay in the loop if fscanf() successfully parsed two tokens as specified.
@@ -84,28 +101,60 @@ int main (int argc, char *argv[]) {
    // Cache* L2 = new Cache(params.BLOCKSIZE, params.L2_SIZE, params.L2_ASSOC);
    // L1->next_mem_hier = L2;
     printf("===== L1 contents =====\n");
-    cache_l1->print_contents();
+    cache_l1->print_cache_contents();
     uint32_t memory_traffic = 0;
-    memory_traffic = cache_l1->cache_measurements.write_backs + cache_l1->cache_measurements.read_misses + cache_l1->cache_measurements.write_misses;
+
+    if (l2_exists == false)
+    {
+        memory_traffic = cache_l1->cache_measurements.write_backs + cache_l1->cache_measurements.read_misses + cache_l1->cache_measurements.write_misses;
+        // printf("\n");
+        // printf("===== Measurements =====\n");
+        // printf("a. L1 reads:                   %u\n",cache_l1->cache_measurements.reads);
+        // printf("b. L1 read misses:             %u\n",cache_l1->cache_measurements.read_misses);
+        // printf("c. L1 writes:                  %u\n",cache_l1->cache_measurements.writes);
+        // printf("d. L1 write misses:            %u\n",cache_l1->cache_measurements.write_misses);
+        // printf("e. L1 miss rate:               %f\n",cache_l1->cache_measurements.miss_rate);
+        // printf("f. L1 writebacks:              %u\n",cache_l1->cache_measurements.write_backs);
+        // printf("g. L1 prefetches:              %u\n",cache_l1->cache_measurements.prefetches);
+        // printf("h. L2 reads (demand):          0\n");
+        // printf("i. L2 read misses (demand):    0\n");
+        // printf("j. L2 reads (prefetch):        0\n");
+        // printf("k. L2 read misses (prefetch):  0\n");
+        // printf("l. L2 writes:                  0\n");
+        // printf("m. L2 write misses:            0\n");
+        // printf("n. L2 miss rate:               0.0000\n");
+        // printf("o. L2 writebacks:              0\n");
+        // printf("p. L2 prefetches:              0\n");
+        // printf("q. memory traffic:             %u\n",memory_traffic);
+    }
+    else 
+    {
+        printf("\n");
+        printf("===== L2 contents =====\n");
+        memory_traffic = cache_l2->cache_measurements.write_backs + cache_l2->cache_measurements.read_misses + cache_l2->cache_measurements.write_misses;
+        cache_l2->print_cache_contents();
+    }
+
     printf("\n");
     printf("===== Measurements =====\n");
     printf("a. L1 reads:                   %u\n",cache_l1->cache_measurements.reads);
     printf("b. L1 read misses:             %u\n",cache_l1->cache_measurements.read_misses);
     printf("c. L1 writes:                  %u\n",cache_l1->cache_measurements.writes);
     printf("d. L1 write misses:            %u\n",cache_l1->cache_measurements.write_misses);
-    printf("e. L1 miss rate:               %f\n",cache_l1->cache_measurements.miss_rate);
+    printf("e. L1 miss rate:               %.4f\n",cache_l1->cache_measurements.miss_rate);
     printf("f. L1 writebacks:              %u\n",cache_l1->cache_measurements.write_backs);
     printf("g. L1 prefetches:              %u\n",cache_l1->cache_measurements.prefetches);
-    printf("h. L2 reads (demand):          0\n");
-    printf("i. L2 read misses (demand):    0\n");
+    printf("h. L2 reads (demand):          %u\n",cache_l2->cache_measurements.reads);
+    printf("i. L2 read misses (demand):    %u\n",cache_l2->cache_measurements.read_misses);
     printf("j. L2 reads (prefetch):        0\n");
     printf("k. L2 read misses (prefetch):  0\n");
-    printf("l. L2 writes:                  0\n");
-    printf("m. L2 write misses:            0\n");
-    printf("n. L2 miss rate:               0.0000\n");
-    printf("o. L2 writebacks:              0\n");
-    printf("p. L2 prefetches:              0\n");
+    printf("l. L2 writes:                  %u\n",cache_l2->cache_measurements.writes);
+    printf("m. L2 write misses:            %u\n",cache_l2->cache_measurements.write_misses);
+    printf("n. L2 miss rate:               %.4f\n",cache_l2->cache_measurements.miss_rate);
+    printf("o. L2 writebacks:              %u\n",cache_l2->cache_measurements.write_backs);
+    printf("p. L2 prefetches:              %u\n",cache_l2->cache_measurements.prefetches);
     printf("q. memory traffic:             %u\n",memory_traffic);
+
     // printf("tag of address = %x\n",L1->get_tag(addr=addr));
     // printf("index of address = %x\n",L1->get_index(addr=addr));
     return(0);
