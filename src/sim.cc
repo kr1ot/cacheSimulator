@@ -59,28 +59,30 @@ int main (int argc, char *argv[]) {
    printf("trace_file: %s\n", trace_file);
    printf("\n");
 
+   Cache* cache_l1 = new Cache(params.BLOCKSIZE, params.L1_SIZE, params.L1_ASSOC);
+
    // Read requests from the trace file and echo them back.
-   // while (fscanf(fp, "%c %x\n", &rw, &addr) == 2) {	// Stay in the loop if fscanf() successfully parsed two tokens as specified.
-   //    if (rw == 'r')
-   //       printf("r %x\n", addr);
-   //    else if (rw == 'w')
-   //       printf("w %x\n", addr);
-   //    else {
-   //       printf("Error: Unknown request type %c.\n", rw);
-	//  exit(EXIT_FAILURE);
-   //    }
+   while (fscanf(fp, "%c %x\n", &rw, &addr) == 2) {	// Stay in the loop if fscanf() successfully parsed two tokens as specified.
+      if (rw == 'r')
+         // printf("r %x\n", addr);
+         cache_l1->request(addr,'r');
+      else if (rw == 'w')
+         // printf("w %x\n", addr);
+         cache_l1->request(addr,'w');
+      else {
+         printf("Error: Unknown request type %c.\n", rw);
+	 exit(EXIT_FAILURE);
+      }
 
-   //    ///////////////////////////////////////////////////////
-   //    // Issue the request to the L1 cache instance here.
-   //    ///////////////////////////////////////////////////////
-   //  }
+      ///////////////////////////////////////////////////////
+      // Issue the request to the L1 cache instance here.
+      ///////////////////////////////////////////////////////
+    }
 
-   Cache* L1 = new Cache(params.BLOCKSIZE, params.L1_SIZE, params.L1_ASSOC);
-   Cache* L2 = new Cache(params.BLOCKSIZE, params.L2_SIZE, params.L2_ASSOC);
-   addr = 0x3bCD;
-   L1->next_mem_hier = L2;
-   L1->display();
-   printf("tag of address = %x\n",L1->get_tag(addr=addr));
-   printf("index of address = %x\n",L1->get_index(addr=addr));
+   // Cache* L2 = new Cache(params.BLOCKSIZE, params.L2_SIZE, params.L2_ASSOC);
+   // L1->next_mem_hier = L2;
+   cache_l1->display();
+   // printf("tag of address = %x\n",L1->get_tag(addr=addr));
+   // printf("index of address = %x\n",L1->get_index(addr=addr));
    return(0);
 }

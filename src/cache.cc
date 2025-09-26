@@ -66,16 +66,14 @@ void Cache::initialize_cache(){
     cache_measurements.prefetches = 0;
 }
 
-bool Cache::is_miss(uint32_t addr){
+bool Cache::is_miss(uint32_t tag, uint32_t index){
     bool miss = true;
-    uint32_t index = get_index(addr = addr);
-    //check the address in the cache
-    
+    //check the tag in the cache
     //loop through the columns for a given set
-    for (int column = 0; column < associativity; column++)
+    for (uint32_t column = 0; column < associativity; column++)
     {
         //check if the address is present and valid flag = 1 for a hit
-        if ((cache[index][column].memory_block == addr) && (cache[index][column].valid_flag == 1)) {
+        if ((cache[index][column].memory_block == tag) && (cache[index][column].valid_flag == 1)) {
             //return false if it hits
             miss = false;
             //do not iterate once memory block is found
@@ -86,44 +84,197 @@ bool Cache::is_miss(uint32_t addr){
     return miss;
 }
 
+void Cache::evict_and_update_lru(uint32_t tag, uint32_t lru_count_to_replace, uint32_t index,char r_w){
+    //in the cache perform the eviction and update the lru counters
+    
+    //run through all the columns for a given index/set
+    for (uint32_t colms = 0;colms < associativity; colms++)
+    { 
+        //increment the lru_counter if lesser than the lru_counter of value
+        //of the required memory block
+        if(cache[index][colms].lru_counter < lru_count_to_replace)
+        {
+            cache[index][colms].lru_counter += 1;
+        }
+        //reset the lru counter to 0, if it hits the required count
+        //this indicates the requested memory block is MRU
+        else if(cache[index][colms].lru_counter == lru_count_to_replace)
+        {
+            cache[index][colms].lru_counter = 0;
+            cache[index][colms].memory_block = tag;
+            //update the valid flag
+            cache[index][colms].valid_flag = 1;
+            //update the radio flags based on r/w
+            if (r_w == 'w')
+            {
+                cache[index][colms].dirty_flag = 1;
+            }
+            else 
+            {
+                cache[index][colms].dirty_flag = 0;
+            }
+        }
+        //keep the value of lru_counter same for counter values greater than 
+        //required count value
+
+    }
+}
+
 //handle the read or write request to the given cache
 void Cache::request(uint32_t addr, char r_w){
     bool miss = true;
     uint32_t index = get_index(addr = addr);
+    uint32_t tag = get_tag(addr = addr);
+    uint32_t lru_count_to_be_evicted = 0;
+
+    //Debugs-
+    printf("%x\n",addr);
 
     //check if the memory blocks misses in cache
-    miss = is_miss(addr);
+    miss = is_miss(tag = tag, index = index);
 
-    
-    //for read requests
-    if (r_w == 'r')
+    //check if this is the last memory strcture
+    if (next_mem_hier == nullptr)
     {
-        cache_measurements.reads += 1;
-        //for misses
-        if(miss == true)
+        //for read requests from upper hierarchy
+        if (r_w == 'r')
         {
-            cache_measurements.read_misses += 1;
-            //check for the LRU in a given set
-            //if dirty bit = 1-> write back to next mem hierarchy
-            if (cache[index][associativity-1].dirty_flag == 1)
+            cache_measurements.reads += 1;
+            //check if the read request is a miss
+            if (miss == true)
             {
-                //increment the write back measurement
-                cache_measurements.write_backs += 1;
-                if (next_mem_hier != nullptr){
-                    next_mem_hier->request(addr,'w');
-                } 
+                cache_measurements.read_misses += 1;
+                //check before eviction, if the memory block at LRU was dirty
+                //dirty = 1 -> write back to main memory
+                if (cache[index][associativity-1].dirty_flag == 1)
+                {
+                    cache_measurements.write_backs += 1;
+                }
+                lru_count_to_be_evicted = associativity-1;
             }
-            //no need for write back if dirty flag = 0
-            //issue a read request to the next hierarchy
-            if (next_mem_hier != nullptr){
-                next_mem_hier->request(addr, 'r');
+            //if the memory is hit in cache
+            else 
+            {
+                //get the lru counter value of current hit block
+                for (uint32_t colms=0; colms < associativity; colms++)
+                {
+                    if (cache[index][colms].memory_block == tag){
+                        lru_count_to_be_evicted = cache[index][colms].lru_counter;
+                    }
+                }
             }
-            
+            //no explicit read issued to memory in the simulator for miss/hit
+            //update the memory block and LRU with the new block 
+            evict_and_update_lru(addr,lru_count_to_be_evicted,index,'r');
         }
-
+        //write request from upper hierarchy
+        else
+        {
+            cache_measurements.writes += 1;
+            //check if the write request is a miss
+            if (miss == true)
+            {
+                cache_measurements.write_misses += 1;
+                //check before eviction if the memory block at LRU was dirty
+                if (cache[index][associativity-1].dirty_flag == 1)
+                {
+                    //perform write back to memory
+                    cache_measurements.write_backs += 1;
+                }
+                //eviction incase it was a write miss
+                lru_count_to_be_evicted = associativity-1;
+                //bring the block from memory incase of miss
+                //no explicit read performed
+            }
+            //write hit
+            else 
+            {
+                //get the lru counter value of current hit block
+                for (uint32_t colms=0; colms < associativity; colms++)
+                {
+                    if (cache[index][colms].memory_block == tag){
+                        lru_count_to_be_evicted = cache[index][colms].lru_counter;
+                    }
+                }
+            }
+            evict_and_update_lru(tag,lru_count_to_be_evicted,index,'w');
+        }
+    }
+    //if next memroy hierarchy exists
+    else
+    {
+        //for read requests from upper hierarchy
+        if (r_w == 'r')
+        {
+            cache_measurements.reads += 1;
+            //check if the read request is a miss
+            if (miss == true)
+            {
+                cache_measurements.read_misses += 1;
+                //check before eviction, if the memory block at LRU was dirty
+                //dirty = 1 -> write back to main memory
+                if (cache[index][associativity-1].dirty_flag == 1)
+                {
+                    cache_measurements.write_backs += 1;
+                    next_mem_hier->request(addr,'w');
+                }
+                //dirty flag is not set
+                else
+                {
+                    next_mem_hier->request(addr,'r');
+                }
+                lru_count_to_be_evicted = associativity-1;
+            }
+            //if the memory is hit in cache
+            else 
+            {
+                //get the lru counter value of current hit block
+                for (uint32_t colms=0; colms < associativity; colms++)
+                {
+                    if (cache[index][colms].memory_block == tag){
+                        lru_count_to_be_evicted = cache[index][colms].lru_counter;
+                    }
+                }
+            }
+            //no explicit read issued to memory in the simulator for miss/hit
+            //update the memory block and LRU with the new block 
+            evict_and_update_lru(addr,lru_count_to_be_evicted,index,'r');
+        }
+        //write request from upper hierarchy
+        else
+        {
+            cache_measurements.writes += 1;
+            //check if the write request is a miss
+            if (miss == true)
+            {
+                cache_measurements.write_misses += 1;
+                //check before eviction if the memory block at LRU was dirty
+                if (cache[index][associativity-1].dirty_flag == 1)
+                {
+                    //perform write back to memory
+                    cache_measurements.write_backs += 1;
+                    next_mem_hier->request(addr,'w');
+                }
+                //eviction incase it was a write miss
+                lru_count_to_be_evicted = associativity-1;
+                //bring the block from memory incase of miss
+                //no explicit read performed
+            }
+            //write hit
+            else 
+            {
+                //get the lru counter value of current hit block
+                for (uint32_t colms=0; colms < associativity; colms++)
+                {
+                    if (cache[index][colms].memory_block == tag){
+                        lru_count_to_be_evicted = cache[index][colms].lru_counter;
+                    }
+                }
+            }
+            evict_and_update_lru(addr,lru_count_to_be_evicted,index,'w');
+        }
     }
 }
-    //for write requests
 
 
 void Cache::display(){

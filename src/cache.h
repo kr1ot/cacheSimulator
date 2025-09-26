@@ -99,7 +99,9 @@ class Cache {
         //handle the request from the upper level -> CPU/upper cache
         void request(uint32_t, char);
 
-        bool is_miss(uint32_t);
+        bool is_miss(uint32_t, uint32_t);
+
+        void evict_and_update_lru(uint32_t, uint32_t, uint32_t, char);
 };
 
 #endif
