@@ -123,12 +123,22 @@ void Cache::evict_and_update_lru(uint32_t tag, uint32_t lru_count_to_replace, ui
     }
 }
 
+uint32_t Cache::get_addr_from_tag_index(uint32_t tag, uint32_t index)
+{
+    //addr = tag + index + offset
+    //to make the address again, perform left shift operations
+    uint32_t addr;
+    addr = (tag << (block_offset_bits + index_bits)) | (index << block_offset_bits) | (uint32_t)(pow(2,block_offset_bits)-1);
+    return addr;
+}
+
 //handle the read or write request to the given cache
 void Cache::request(uint32_t addr, char r_w){
     bool miss = true;
     uint32_t index = get_index(addr = addr);
     uint32_t tag = get_tag(addr = addr);
     uint32_t lru_count_to_be_evicted = 0;
+    uint32_t addr_to_be_evicted = 0;
 
     //Debugs-
     // printf("%x\n",addr);
@@ -251,8 +261,10 @@ void Cache::request(uint32_t addr, char r_w){
                         if (cache[index][colm].dirty_flag == 1)
                         {
                             cache_measurements.write_backs += 1;
-                            next_mem_hier->request(addr,'w');
-                            cache[index][associativity-1].dirty_flag = 0;
+                            //send the address of the block to next mem that is being evicted
+                            addr_to_be_evicted = get_addr_from_tag_index(cache[index][colm].memory_block,index);
+                            next_mem_hier->request(addr_to_be_evicted,'w');
+                            cache[index][colm].dirty_flag = 0;
                         }
                         break;
                     }
@@ -294,8 +306,9 @@ void Cache::request(uint32_t addr, char r_w){
                         if (cache[index][colm].dirty_flag == 1)
                         {
                             cache_measurements.write_backs += 1;
-                            next_mem_hier->request(addr,'w');
-                            cache[index][associativity-1].dirty_flag = 0;
+                            addr_to_be_evicted = get_addr_from_tag_index(cache[index][colm].memory_block,index);
+                            next_mem_hier->request(addr_to_be_evicted,'w');
+                            cache[index][colm].dirty_flag = 0;
                         }
                         break;
                     }

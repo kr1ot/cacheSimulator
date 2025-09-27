@@ -85,6 +85,7 @@ class Cache {
         bool is_miss(uint32_t, uint32_t);
 
         void evict_and_update_lru(uint32_t, uint32_t, uint32_t, char);
+        uint32_t get_addr_from_tag_index(uint32_t, uint32_t);
 };
 
 #endif
