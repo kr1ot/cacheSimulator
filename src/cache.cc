@@ -351,7 +351,7 @@ void Cache::print_cache_contents()
         //if set is valid then print the set
         if (set_invalid == false)
         {
-            printf("set\t\t %u:",set);
+            printf("set     %2u: ",set);
         }
         //else break out of the loop. Do not print anything for the set
         else
@@ -372,10 +372,10 @@ void Cache::print_cache_contents()
                     //check if the bit is dirty
                     if (cache[set][colm].dirty_flag == 1){
                         // printf("   %x D\t (%u)",cache[set][colm].memory_block,cache[set][colm].lru_counter);
-                        printf("   %x D\t ",cache[set][colm].memory_block);
+                        printf("  %x D",cache[set][colm].memory_block);
                     }
                     else{
-                        printf("   %x\t   ",cache[set][colm].memory_block);
+                        printf("  %x  ",cache[set][colm].memory_block);
                     }
                     break;
                 }

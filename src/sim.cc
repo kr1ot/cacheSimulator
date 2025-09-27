@@ -57,7 +57,7 @@ int main (int argc, char *argv[]) {
    printf("PREF_N:     %u\n", params.PREF_N);
    printf("PREF_M:     %u\n", params.PREF_M);
    printf("trace_file: %s\n", trace_file);
-   // printf("\n");
+   printf("\n");
    // printf("\n");
    
 
