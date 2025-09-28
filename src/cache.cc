@@ -366,10 +366,10 @@ void Cache::print_cache_contents()
         {
             printf("set     %2u: ",set);
         }
-        //else break out of the loop. Do not print anything for the set
+        //else skip the value of the set in loop. Do not print anything
         else
         {
-            break;
+            continue;
         }
 
         //print the cache based on MRU -> LRU
