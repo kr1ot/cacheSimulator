@@ -62,9 +62,10 @@ void Cache::generate_cache(){
 }
 
 void Cache::generate_stream_buffer(uint32_t number_of_stream_buffers, uint32_t depth_of_stream_buffer){
+
     //assign the class variables
-    number_of_stream_buffers = number_of_stream_buffers;
-    depth_of_stream_buffer = depth_of_stream_buffer;
+    this->number_of_stream_buffers = number_of_stream_buffers;
+    this->depth_of_stream_buffer = depth_of_stream_buffer;
 
     //create stream buffer associated with the cache
     //iterate through the required number of stream buffers
@@ -146,6 +147,109 @@ bool Cache::is_stream_buffer_miss(uint32_t addr){
     return is_miss;
 }
 
+void Cache::update_stream_buffer(bool cache_miss, bool stb_miss, uint32_t addr)
+{
+    uint32_t stb_lru_count_to_evict = 0; //lru count that needs to be replaced
+    uint32_t addr_to_bring_in_stb = 0; //starting address with which stb starts filling
+    //variables for iterating through stream buffers
+    uint32_t rows = 0;  
+    uint32_t colms = 0;
+
+    //variables storing the values of row,colm for which
+    //stream buffer hits
+    bool update_stream_buffer_flag = true;
+    bool found_addr_in_stb_flag = false;
+    //1. cache miss, stb miss
+    //2. cache miss, stb hit
+    //3. cache hit, stb miss
+    //4. cache hit, stb hit
+
+    //#2 and #4 are same in terms of stream buffer update
+    
+    //if stb hits, 
+    //- update the recency order of stream buffer 
+    //- remove the addresses lesser than "hit" address
+    //- bring in more addresses depending on the length
+
+    //if stb misses, -> cache misses
+    //- remove the contents of the LRU buffer
+    //- bring in M elements from addr+1 to addr+M
+    if (stb_miss == true)
+    {
+        //incase cache misses
+        if (cache_miss == true)
+        {
+            //update the values for the least recently used buffer
+            stb_lru_count_to_evict = number_of_stream_buffers-1;
+            addr_to_bring_in_stb = addr + 1;
+            cache_measurements.prefetches += depth_of_stream_buffer;
+            update_stream_buffer_flag = true;
+        }
+        //incase cache hit,
+        // dont do anything
+        else { update_stream_buffer_flag = false;}
+    }
+    //stream buffer hit
+    else
+    {
+        update_stream_buffer_flag = true;
+        //get the buffer number and index of buffer at which
+        //stream buffer hits
+        for (rows = 0; rows < number_of_stream_buffers; rows++)
+        {
+            if (stream_buffer[rows].valid_flag == 0) {continue;}
+            //check only the valid stream buffers
+            else
+            {
+                found_addr_in_stb_flag = false;
+                for (colms=0; colms < depth_of_stream_buffer; colms++)
+                {
+                    if (stream_buffer[rows].ptr_to_stream_buffer[colms] == addr)
+                    {
+                        stb_lru_count_to_evict = rows;
+                        addr_to_bring_in_stb = addr+1;
+                        found_addr_in_stb_flag = true;
+                        //total number of prefetches required 
+                        //if hit on index colm, remove all the elements above colm
+                        //new elements required would be the number removed
+                        cache_measurements.prefetches += colms+1;
+                        //break from the loop once found the element in buffer
+                        break;
+                    }
+                }
+                
+            }
+            //Do not search in any other stream buffer if found the address
+            if (found_addr_in_stb_flag == true) { break;}
+        }
+    }
+
+
+    //only update in required
+    if (update_stream_buffer_flag == true)
+    {
+        //update stream buffer
+        for (rows=0; rows < number_of_stream_buffers; rows++)
+        {
+            //increment the lru counter of values lesser than hit
+            if (stream_buffer[rows].lru_counter < stb_lru_count_to_evict)
+            {
+                stream_buffer[rows].lru_counter += 1;
+            }
+            else
+            {
+                stream_buffer[rows].lru_counter = 0;
+                stream_buffer[rows].valid_flag = 1;
+                //bring in all the addresses
+                for (colms=0; colms<depth_of_stream_buffer; colms++)
+                {
+                    stream_buffer[rows].ptr_to_stream_buffer[colms] = addr_to_bring_in_stb + colms;
+                }
+            }
+        }
+    } 
+}
+
 void Cache::evict_and_update_lru(uint32_t tag, uint32_t lru_count_to_replace, uint32_t index,char r_w){
     //in the cache perform the eviction and update the lru counters
     
@@ -190,7 +294,7 @@ uint32_t Cache::get_addr_from_tag_index(uint32_t tag, uint32_t index)
 //handle the read or write request to the given cache
 void Cache::request(uint32_t addr, char r_w)
 {
-    bool miss = true;
+    bool miss = true; //cache miss
     uint32_t index = get_index(addr = addr);
     uint32_t tag = get_tag(addr = addr);
     uint32_t lru_count_to_be_evicted = 0;
@@ -204,19 +308,34 @@ void Cache::request(uint32_t addr, char r_w)
     //check if the memory blocks misses in cache
     miss = is_cache_miss(tag = tag, index = index);
     
+    if (stb_exists == true) 
+    {
+        stb_miss = is_stream_buffer_miss((addr >> block_offset_bits));
+        //perform required operation in stream buffer based on
+        //hit or miss
+        update_stream_buffer(miss, stb_miss, (addr>>block_offset_bits));
+    }
+    else 
+        stb_miss = true;
+    
     //for requests from upper memory hierarchy
     if (r_w == 'w')
         cache_measurements.writes += 1; 
     else
         cache_measurements.reads += 1;
+
+
     
     //check if the request is a miss in cache
     if (miss == true)
     {
-        if (r_w == 'w')
-            cache_measurements.write_misses += 1;
-        else
-            cache_measurements.read_misses +=1;
+        if (stb_miss == true)
+        {
+            if (r_w == 'w')
+               cache_measurements.write_misses += 1;
+            else
+                cache_measurements.read_misses +=1;
+        }
         
         //get the column whose lru_counter = associativity - 1
         for (uint32_t colm =0; colm < associativity; colm++)

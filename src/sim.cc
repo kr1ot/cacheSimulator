@@ -85,7 +85,7 @@ int main (int argc, char *argv[]) {
        cache_l1->next_mem_hier = cache_l2;
        if (stb_exists == true) {
         //create stream buffer in L2 hierarchy
-       cache_l2->generate_stream_buffer(params.PREF_N,params.PREF_M);
+        cache_l2->generate_stream_buffer(params.PREF_N,params.PREF_M);
        }
    }
    //if l2 does not exist
@@ -124,13 +124,13 @@ int main (int argc, char *argv[]) {
 
     if (l2_exists == false)
     {
-        memory_traffic = cache_l1->cache_measurements.write_backs + cache_l1->cache_measurements.read_misses + cache_l1->cache_measurements.write_misses;
+        memory_traffic = cache_l1->cache_measurements.write_backs + cache_l1->cache_measurements.read_misses + cache_l1->cache_measurements.write_misses + cache_l1->cache_measurements.prefetches;
     }
     else 
     {
         printf("\n");
         printf("===== L2 contents =====\n");
-        memory_traffic = cache_l2->cache_measurements.write_backs + cache_l2->cache_measurements.read_misses + cache_l2->cache_measurements.write_misses;
+        memory_traffic = cache_l2->cache_measurements.write_backs + cache_l2->cache_measurements.read_misses + cache_l2->cache_measurements.write_misses + cache_l1->cache_measurements.prefetches;
         cache_l2->print_cache_contents();
         cache_l2->cache_measurements.miss_rate = (float)(cache_l2->cache_measurements.read_misses)/(float)(cache_l2->cache_measurements.reads);
     }

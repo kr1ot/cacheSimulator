@@ -100,7 +100,7 @@ class Cache {
 
         //handle the request from the upper level -> CPU/upper cache
         void request(uint32_t, char);
-        
+        void update_stream_buffer(bool, bool, uint32_t);
 
         bool is_cache_miss(uint32_t, uint32_t);
         bool is_stream_buffer_miss(uint32_t);
