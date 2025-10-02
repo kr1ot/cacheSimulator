@@ -146,11 +146,11 @@ int main (int argc, char *argv[]) {
         //check the hierarchy for which the stream buffer is added
         if (l2_exists == true)
         {
-            cache_l2->print_stream_buffer_contents(params.PREF_N, params.PREF_M);
+            cache_l2->print_stream_buffer_contents();
         }
         else 
         {
-            cache_l1->print_stream_buffer_contents(params.PREF_N, params.PREF_M);
+            cache_l1->print_stream_buffer_contents();
         }
     }
     printf("\n");

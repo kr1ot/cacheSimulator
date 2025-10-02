@@ -49,6 +49,10 @@ class Cache {
         uint32_t block_size;    //block size 
         uint32_t cache_size;    //cache size 
         uint32_t associativity; //associativity 
+
+        //stream buffer properties
+        uint32_t depth_of_stream_buffer;
+        uint32_t number_of_stream_buffers;
         
         //cache properties
         uint8_t number_of_sets; //number of sets associated to cache
@@ -67,7 +71,7 @@ class Cache {
         cache_measurements_t cache_measurements;
         
         //stream buffer storing the prefetched address
-        stream_buffer_t* stream_buffer;
+        stream_buffer_t* stream_buffer = nullptr;
 
         //------Function definitions------//
 
@@ -77,7 +81,7 @@ class Cache {
 
         //debug function to check if I'm passing and using the correct values
         void display();
-        void print_stream_buffer_contents(uint32_t, uint32_t);
+        void print_stream_buffer_contents();
         void print_cache_contents();
  
         //calculates all the cache properties 
@@ -96,8 +100,10 @@ class Cache {
 
         //handle the request from the upper level -> CPU/upper cache
         void request(uint32_t, char);
+        
 
-        bool is_miss(uint32_t, uint32_t);
+        bool is_cache_miss(uint32_t, uint32_t);
+        bool is_stream_buffer_miss(uint32_t);
 
         void evict_and_update_lru(uint32_t, uint32_t, uint32_t, char);
         uint32_t get_addr_from_tag_index(uint32_t, uint32_t);
