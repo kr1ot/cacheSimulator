@@ -132,16 +132,16 @@ int main (int argc, char *argv[]) {
         printf("===== L2 contents =====\n");
         memory_traffic = cache_l2->cache_measurements.write_backs + cache_l2->cache_measurements.read_misses + cache_l2->cache_measurements.write_misses;
         cache_l2->print_cache_contents();
+        cache_l2->cache_measurements.miss_rate = (float)(cache_l2->cache_measurements.read_misses)/(float)(cache_l2->cache_measurements.reads);
     }
 
     //caclulate miss rates
     cache_l1->cache_measurements.miss_rate = (float)(cache_l1->cache_measurements.read_misses + cache_l1->cache_measurements.write_misses)/(float)(cache_l1->cache_measurements.reads + cache_l1->cache_measurements.writes);
-    cache_l2->cache_measurements.miss_rate = (float)(cache_l2->cache_measurements.read_misses)/(float)(cache_l2->cache_measurements.reads);
 
-    printf("\n");
     //check for stream buffer output
     if (stb_exists == true)
     {
+        printf("\n");
         printf("===== Stream Buffer(s) contents =====\n");
         //check the hierarchy for which the stream buffer is added
         if (l2_exists == true)
