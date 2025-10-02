@@ -28,8 +28,19 @@ typedef struct
     float miss_rate;
     uint32_t write_backs;
     uint32_t prefetches;
-    
 } cache_measurements_t;
+
+//stream buffer associated with cache
+typedef struct
+{
+    //=1 -> stream buffer is valid
+    uint8_t valid_flag;
+    //pointer to the start of the stream buffer
+    uint32_t* ptr_to_stream_buffer;
+    //lru counter to check the recency
+    //0 -> MRU, N-1 -> LRU
+    uint32_t lru_counter;
+} stream_buffer_t;
 
 
 class Cache {
@@ -55,6 +66,8 @@ class Cache {
         //cache measurements for the read/write request
         cache_measurements_t cache_measurements;
         
+        //stream buffer storing the prefetched address
+        stream_buffer_t* stream_buffer;
 
         //------Function definitions------//
 
@@ -64,6 +77,7 @@ class Cache {
 
         //debug function to check if I'm passing and using the correct values
         void display();
+        void print_stream_buffer_contents(uint32_t, uint32_t);
         void print_cache_contents();
  
         //calculates all the cache properties 
@@ -77,6 +91,7 @@ class Cache {
  
         //initialize the cache with default values
         void generate_cache();
+        void generate_stream_buffer(uint32_t, uint32_t);
         void initialize_cache_params();
 
         //handle the request from the upper level -> CPU/upper cache

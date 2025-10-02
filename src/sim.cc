@@ -68,16 +68,34 @@ int main (int argc, char *argv[]) {
     // cache_l2->display();
    //based on the L2 size paramenter, decide whether L2 is present
    bool l2_exists = false;
+   //boolean to indicate whether stream buffer exists
+   bool stb_exists = false;
 
    if (params.L2_SIZE != 0)
    {
        l2_exists = true;
    }
+   if (params.PREF_N !=0)
+   {
+        stb_exists = true;
+   }
 
    if (l2_exists == true)
    {
-       
        cache_l1->next_mem_hier = cache_l2;
+       if (stb_exists == true) {
+        //create stream buffer in L2 hierarchy
+       cache_l2->generate_stream_buffer(params.PREF_N,params.PREF_M);
+       }
+   }
+   //if l2 does not exist
+   else
+   {
+    //check if stream buffer exists
+    if (stb_exists == true) {
+        //create stream buffer in L1 hierarchy
+        cache_l1->generate_stream_buffer(params.PREF_N,params.PREF_M);
+        }
    }
 
    // Read requests from the trace file and echo them back.
@@ -107,25 +125,6 @@ int main (int argc, char *argv[]) {
     if (l2_exists == false)
     {
         memory_traffic = cache_l1->cache_measurements.write_backs + cache_l1->cache_measurements.read_misses + cache_l1->cache_measurements.write_misses;
-        // printf("\n");
-        // printf("===== Measurements =====\n");
-        // printf("a. L1 reads:                   %u\n",cache_l1->cache_measurements.reads);
-        // printf("b. L1 read misses:             %u\n",cache_l1->cache_measurements.read_misses);
-        // printf("c. L1 writes:                  %u\n",cache_l1->cache_measurements.writes);
-        // printf("d. L1 write misses:            %u\n",cache_l1->cache_measurements.write_misses);
-        // printf("e. L1 miss rate:               %f\n",cache_l1->cache_measurements.miss_rate);
-        // printf("f. L1 writebacks:              %u\n",cache_l1->cache_measurements.write_backs);
-        // printf("g. L1 prefetches:              %u\n",cache_l1->cache_measurements.prefetches);
-        // printf("h. L2 reads (demand):          0\n");
-        // printf("i. L2 read misses (demand):    0\n");
-        // printf("j. L2 reads (prefetch):        0\n");
-        // printf("k. L2 read misses (prefetch):  0\n");
-        // printf("l. L2 writes:                  0\n");
-        // printf("m. L2 write misses:            0\n");
-        // printf("n. L2 miss rate:               0.0000\n");
-        // printf("o. L2 writebacks:              0\n");
-        // printf("p. L2 prefetches:              0\n");
-        // printf("q. memory traffic:             %u\n",memory_traffic);
     }
     else 
     {
@@ -135,6 +134,25 @@ int main (int argc, char *argv[]) {
         cache_l2->print_cache_contents();
     }
 
+    //caclulate miss rates
+    cache_l1->cache_measurements.miss_rate = (float)(cache_l1->cache_measurements.read_misses + cache_l1->cache_measurements.write_misses)/(float)(cache_l1->cache_measurements.reads + cache_l1->cache_measurements.writes);
+    cache_l2->cache_measurements.miss_rate = (float)(cache_l2->cache_measurements.read_misses)/(float)(cache_l2->cache_measurements.reads);
+
+    printf("\n");
+    //check for stream buffer output
+    if (stb_exists == true)
+    {
+        printf("===== Stream Buffer(s) contents =====\n");
+        //check the hierarchy for which the stream buffer is added
+        if (l2_exists == true)
+        {
+            cache_l2->print_stream_buffer_contents(params.PREF_N, params.PREF_M);
+        }
+        else 
+        {
+            cache_l1->print_stream_buffer_contents(params.PREF_N, params.PREF_M);
+        }
+    }
     printf("\n");
     printf("===== Measurements =====\n");
     printf("a. L1 reads:                   %u\n",cache_l1->cache_measurements.reads);

@@ -61,6 +61,28 @@ void Cache::generate_cache(){
     }
 }
 
+void Cache::generate_stream_buffer(uint32_t number_of_stream_buffers, uint32_t depth_of_stream_buffer){
+    //create stream buffer associated with the cache
+    //iterate through the required number of stream buffers
+    stream_buffer = new stream_buffer_t[number_of_stream_buffers];
+    for (uint32_t rows = 0; rows < number_of_stream_buffers; rows++)
+    {
+        //generate a buffer with given depth
+        stream_buffer[rows].ptr_to_stream_buffer = new uint32_t[depth_of_stream_buffer];
+    }
+
+    //initialize each of the element of the stream buffer with 0
+    for (uint32_t rows = 0; rows < number_of_stream_buffers; rows++)
+    {
+        stream_buffer[rows].valid_flag = 0;
+        stream_buffer[rows].lru_counter = rows;
+        for(uint32_t colms = 0; colms < depth_of_stream_buffer; colms++)
+        {
+            stream_buffer[rows].ptr_to_stream_buffer[colms] = 0;
+        }
+    }
+}
+
 void Cache::initialize_cache_params(){
 
     //initialize the cache measurements with 0
@@ -337,8 +359,6 @@ void Cache::request(uint32_t addr, char r_w){
 
 void Cache::print_cache_contents()
 {
-    //caclulate miss rate
-    cache_measurements.miss_rate = (float)(cache_measurements.read_misses + cache_measurements.write_misses)/(float)(cache_measurements.reads + cache_measurements.writes);
     // printf("Debugging:\n");
     // printf("read_miss = %u\n",cache_measurements.read_misses);
     // printf("write_miss = %u\n",cache_measurements.write_misses);
@@ -393,6 +413,19 @@ void Cache::print_cache_contents()
                     break;
                 }
             }
+        }
+        printf("\n");
+    }
+    //TODO: Delete the cache after printing contents
+}
+
+void Cache::print_stream_buffer_contents(uint32_t number_of_stream_buffers, uint32_t depth_of_stream_buffer){
+    //print the contents of stream buffers
+    for (uint32_t rows = 0; rows<number_of_stream_buffers; rows++)
+    {
+        for(uint32_t colms = 0; colms < depth_of_stream_buffer; colms++)
+        {
+            printf(" %x ",stream_buffer[rows].ptr_to_stream_buffer[colms]);
         }
         printf("\n");
     }
