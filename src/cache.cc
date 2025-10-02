@@ -187,26 +187,31 @@ void Cache::update_stream_buffer(bool cache_miss, bool stb_miss, uint32_t addr)
         }
         //incase cache hit,
         // dont do anything
-        else { update_stream_buffer_flag = false;}
+        else update_stream_buffer_flag = false;
     }
     //stream buffer hit
     else
     {
         update_stream_buffer_flag = true;
-        //get the buffer number and index of buffer at which
-        //stream buffer hits
-        for (rows = 0; rows < number_of_stream_buffers; rows++)
+        //loop through based on recency order
+        for (uint32_t lru_count =0 ; lru_count < number_of_stream_buffers; lru_count++)
         {
-            if (stream_buffer[rows].valid_flag == 0) {continue;}
-            //check only the valid stream buffers
-            else
+            //get the buffer number and index of buffer at which
+            //stream buffer hits
+            for (rows = 0; rows < number_of_stream_buffers; rows++)
             {
+                //if lru count is not the one required, skip the loop.
+                if (stream_buffer[rows].lru_counter != lru_count) continue;
+                //if flag is invalid, exit from the loop and go to next count value
+                if (stream_buffer[rows].valid_flag == 0) break;
+
+                //check only the valid buffers
                 found_addr_in_stb_flag = false;
                 for (colms=0; colms < depth_of_stream_buffer; colms++)
                 {
                     if (stream_buffer[rows].ptr_to_stream_buffer[colms] == addr)
                     {
-                        stb_lru_count_to_evict = rows;
+                        stb_lru_count_to_evict = lru_count;
                         addr_to_bring_in_stb = addr+1;
                         found_addr_in_stb_flag = true;
                         //total number of prefetches required 
@@ -217,10 +222,11 @@ void Cache::update_stream_buffer(bool cache_miss, bool stb_miss, uint32_t addr)
                         break;
                     }
                 }
-                
+                //break if could not find in a given buffer
+                break;
             }
-            //Do not search in any other stream buffer if found the address
-            if (found_addr_in_stb_flag == true) { break;}
+            //do not search for any other recency
+            if (found_addr_in_stb_flag == true) break;
         }
     }
 
@@ -236,7 +242,7 @@ void Cache::update_stream_buffer(bool cache_miss, bool stb_miss, uint32_t addr)
             {
                 stream_buffer[rows].lru_counter += 1;
             }
-            else
+            else if(stream_buffer[rows].lru_counter == stb_lru_count_to_evict)
             {
                 stream_buffer[rows].lru_counter = 0;
                 stream_buffer[rows].valid_flag = 1;
@@ -246,8 +252,9 @@ void Cache::update_stream_buffer(bool cache_miss, bool stb_miss, uint32_t addr)
                     stream_buffer[rows].ptr_to_stream_buffer[colms] = addr_to_bring_in_stb + colms;
                 }
             }
+            //else do not change the lru_counter value
         }
-    } 
+    }
 }
 
 void Cache::evict_and_update_lru(uint32_t tag, uint32_t lru_count_to_replace, uint32_t index,char r_w){
@@ -391,7 +398,6 @@ void Cache::print_cache_contents()
     // printf("writes = %u\n",cache_measurements.writes);
     // printf("miss rate = %f\n",cache_measurements.miss_rate);
 
-
     for (uint32_t set=0; set < number_of_sets; set++)
     {
         //a set is invalid if all the memory blocks are invalid
@@ -445,14 +451,22 @@ void Cache::print_cache_contents()
 }
 
 void Cache::print_stream_buffer_contents(){
-    //print the contents of stream buffers
-    for (uint32_t rows = 0; rows<number_of_stream_buffers; rows++)
+    //print the contents based on recency order MRU -> LRU
+    for (uint32_t lru_count = 0; lru_count < number_of_stream_buffers; lru_count++)
     {
-        for(uint32_t colms = 0; colms < depth_of_stream_buffer; colms++)
+        //print the contents of stream buffers
+        for (uint32_t rows = 0; rows < number_of_stream_buffers; rows++)
         {
-            printf(" %x ",stream_buffer[rows].ptr_to_stream_buffer[colms]);
+            //do not print the buffer if lru count does not match
+            if (stream_buffer[rows].lru_counter != lru_count) continue;
+            //if stream buffer is invalid, do not print it
+            if (stream_buffer[rows].valid_flag == 0) break;
+            for(uint32_t colms = 0; colms < depth_of_stream_buffer; colms++)
+            {
+                printf(" %x ",stream_buffer[rows].ptr_to_stream_buffer[colms]);
+            }
+            printf("\n");
         }
-        printf("\n");
     }
 }
 

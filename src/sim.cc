@@ -130,7 +130,7 @@ int main (int argc, char *argv[]) {
     {
         printf("\n");
         printf("===== L2 contents =====\n");
-        memory_traffic = cache_l2->cache_measurements.write_backs + cache_l2->cache_measurements.read_misses + cache_l2->cache_measurements.write_misses + cache_l1->cache_measurements.prefetches;
+        memory_traffic = cache_l2->cache_measurements.write_backs + cache_l2->cache_measurements.read_misses + cache_l2->cache_measurements.write_misses + cache_l2->cache_measurements.prefetches;
         cache_l2->print_cache_contents();
         cache_l2->cache_measurements.miss_rate = (float)(cache_l2->cache_measurements.read_misses)/(float)(cache_l2->cache_measurements.reads);
     }
