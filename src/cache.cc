@@ -309,8 +309,6 @@ void Cache::request(uint32_t addr, char r_w)
     
     bool stb_exists = (stream_buffer != nullptr) ? true : false;
     bool stb_miss = true;
-    //Debugs-
-    // printf("%x\n",addr);
 
     //check if the memory blocks misses in cache
     miss = is_cache_miss(tag = tag, index = index);
@@ -389,15 +387,9 @@ void Cache::request(uint32_t addr, char r_w)
     
 }
 
+//print the cache contents from MRU to LRU order
 void Cache::print_cache_contents()
 {
-    // printf("Debugging:\n");
-    // printf("read_miss = %u\n",cache_measurements.read_misses);
-    // printf("write_miss = %u\n",cache_measurements.write_misses);
-    // printf("reads = %u\n",cache_measurements.reads);
-    // printf("writes = %u\n",cache_measurements.writes);
-    // printf("miss rate = %f\n",cache_measurements.miss_rate);
-
     for (uint32_t set=0; set < number_of_sets; set++)
     {
         //a set is invalid if all the memory blocks are invalid
@@ -435,7 +427,6 @@ void Cache::print_cache_contents()
                 {
                     //check if the bit is dirty
                     if (cache[set][colm].dirty_flag == 1){
-                        // printf("   %x D\t (%u)",cache[set][colm].memory_block,cache[set][colm].lru_counter);
                         printf("  %x D",cache[set][colm].memory_block);
                     }
                     else{
@@ -469,26 +460,3 @@ void Cache::print_stream_buffer_contents(){
         }
     }
 }
-
-
-void Cache::display(){
-    printf("block_size = %u\n",block_size);
-    printf("cache_size = %u\n",cache_size);
-    printf("associativity = %u\n",associativity); 
-    printf("number of sets = %u\n",number_of_sets);
-    printf("number of index_bits = %u\n",index_bits);
-    printf("number of block_offset_bits = %u\n",block_offset_bits);
-    printf("number of tag_bits = %u\n",tag_bits);  
-
-    printf("Cache contents: \n");
-    //print the cache 
-    for (uint32_t row=0; row < number_of_sets; row++)
-    {
-        printf("set = %u -> ",row);
-        for (uint32_t colm = 0; colm < associativity; colm++)
-        {
-            printf("lru counter = %u : %x \t",cache[row][colm].lru_counter,cache[row][colm].memory_block);
-        }
-        printf("\n");
-    }
-} 

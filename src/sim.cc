@@ -16,108 +16,104 @@
     ... and so on
 */
 int main (int argc, char *argv[]) {
-   FILE *fp;			// File pointer.
-   char *trace_file;		// This variable holds the trace file name.
-   cache_params_t params;	// Look at the sim.h header file for the definition of struct cache_params_t.
-   char rw;			// This variable holds the request's type (read or write) obtained from the trace.
-   uint32_t addr;		// This variable holds the request's address obtained from the trace.
+    FILE *fp;			// File pointer.
+    char *trace_file;		// This variable holds the trace file name.
+    cache_params_t params;	// Look at the sim.h header file for the definition of struct cache_params_t.
+    char rw;			// This variable holds the request's type (read or write) obtained from the trace.
+    uint32_t addr;		// This variable holds the request's address obtained from the trace.
                 // The header file <inttypes.h> above defines signed and unsigned integers of various sizes in a machine-agnostic way.  "uint32_t" is an unsigned integer of 32 bits.
 
-   // Exit with an error if the number of command-line arguments is incorrect.
-   if (argc != 9) {
-      printf("Error: Expected 8 command-line arguments but was provided %d.\n", (argc - 1));
-      exit(EXIT_FAILURE);
-   }
+    // Exit with an error if the number of command-line arguments is incorrect.
+    if (argc != 9) {
+        printf("Error: Expected 8 command-line arguments but was provided %d.\n", (argc - 1));
+        exit(EXIT_FAILURE);
+    }
     
-   // "atoi()" (included by <stdlib.h>) converts a string (char *) to an integer (int).
-   params.BLOCKSIZE = (uint32_t) atoi(argv[1]);
-   params.L1_SIZE   = (uint32_t) atoi(argv[2]);
-   params.L1_ASSOC  = (uint32_t) atoi(argv[3]);
-   params.L2_SIZE   = (uint32_t) atoi(argv[4]);
-   params.L2_ASSOC  = (uint32_t) atoi(argv[5]);
-   params.PREF_N    = (uint32_t) atoi(argv[6]);
-   params.PREF_M    = (uint32_t) atoi(argv[7]);
-   trace_file       = argv[8];
+    // "atoi()" (included by <stdlib.h>) converts a string (char *) to an integer (int).
+    params.BLOCKSIZE = (uint32_t) atoi(argv[1]);
+    params.L1_SIZE   = (uint32_t) atoi(argv[2]);
+    params.L1_ASSOC  = (uint32_t) atoi(argv[3]);
+    params.L2_SIZE   = (uint32_t) atoi(argv[4]);
+    params.L2_ASSOC  = (uint32_t) atoi(argv[5]);
+    params.PREF_N    = (uint32_t) atoi(argv[6]);
+    params.PREF_M    = (uint32_t) atoi(argv[7]);
+    trace_file       = argv[8];
 
-   // Open the trace file for reading.
-   fp = fopen(trace_file, "r");
-   if (fp == (FILE *) NULL) {
-      // Exit with an error if file open failed.
-      printf("Error: Unable to open file %s\n", trace_file);
-      exit(EXIT_FAILURE);
-   }
+    // Open the trace file for reading.
+    fp = fopen(trace_file, "r");
+    if (fp == (FILE *) NULL) {
+        // Exit with an error if file open failed.
+        printf("Error: Unable to open file %s\n", trace_file);
+        exit(EXIT_FAILURE);
+    }
     
-   // Print simulator configuration.
-   printf("===== Simulator configuration =====\n");
-   printf("BLOCKSIZE:  %u\n", params.BLOCKSIZE);
-   printf("L1_SIZE:    %u\n", params.L1_SIZE);
-   printf("L1_ASSOC:   %u\n", params.L1_ASSOC);
-   printf("L2_SIZE:    %u\n", params.L2_SIZE);
-   printf("L2_ASSOC:   %u\n", params.L2_ASSOC);
-   printf("PREF_N:     %u\n", params.PREF_N);
-   printf("PREF_M:     %u\n", params.PREF_M);
-   printf("trace_file: %s\n", trace_file);
-   printf("\n");
-   // printf("\n");
-   
-
+    // Print simulator configuration.
+    printf("===== Simulator configuration =====\n");
+    printf("BLOCKSIZE:  %u\n", params.BLOCKSIZE);
+    printf("L1_SIZE:    %u\n", params.L1_SIZE);
+    printf("L1_ASSOC:   %u\n", params.L1_ASSOC);
+    printf("L2_SIZE:    %u\n", params.L2_SIZE);
+    printf("L2_ASSOC:   %u\n", params.L2_ASSOC);
+    printf("PREF_N:     %u\n", params.PREF_N);
+    printf("PREF_M:     %u\n", params.PREF_M);
+    printf("trace_file: %s\n", trace_file);
+    printf("\n");
+    
+    //create caches for L1 and L2
     Cache* cache_l1 = new Cache(params.BLOCKSIZE, params.L1_SIZE, params.L1_ASSOC);
     Cache* cache_l2 = new Cache(params.BLOCKSIZE, params.L2_SIZE, params.L2_ASSOC);
 
-    // cache_l1->display();
-    // cache_l2->display();
-   //based on the L2 size paramenter, decide whether L2 is present
-   bool l2_exists = false;
-   //boolean to indicate whether stream buffer exists
-   bool stb_exists = false;
+    //based on the L2 size paramenter, decide whether L2 is present
+    bool l2_exists = false;
+    //boolean to indicate whether stream buffer exists
+    bool stb_exists = false;
 
-   if (params.L2_SIZE != 0)
-   {
-       l2_exists = true;
-   }
-   if (params.PREF_N !=0)
-   {
+    if (params.L2_SIZE != 0)
+    {
+        l2_exists = true;
+    }
+    if (params.PREF_N !=0)
+    {
         stb_exists = true;
-   }
+    }
 
-   if (l2_exists == true)
-   {
-       cache_l1->next_mem_hier = cache_l2;
-       if (stb_exists == true) {
-        //create stream buffer in L2 hierarchy
-        cache_l2->generate_stream_buffer(params.PREF_N,params.PREF_M);
-       }
-   }
-   //if l2 does not exist
-   else
-   {
-    //check if stream buffer exists
-    if (stb_exists == true) {
-        //create stream buffer in L1 hierarchy
-        cache_l1->generate_stream_buffer(params.PREF_N,params.PREF_M);
+    if (l2_exists == true)
+    {
+        //point to next hierarchy from l1 -> l2
+        cache_l1->next_mem_hier = cache_l2;
+        if (stb_exists == true) {
+            //create stream buffer in L2 hierarchy
+            cache_l2->generate_stream_buffer(params.PREF_N,params.PREF_M);
         }
-   }
+    }
+    //if l2 does not exist
+    else
+    {
+        //check if stream buffer exists
+        if (stb_exists == true) {
+            //create stream buffer in L1 hierarchy
+            cache_l1->generate_stream_buffer(params.PREF_N,params.PREF_M);
+            }
+    }
 
-   // Read requests from the trace file and echo them back.
-   while (fscanf(fp, "%c %x\n", &rw, &addr) == 2) {	// Stay in the loop if fscanf() successfully parsed two tokens as specified.
-      if (rw == 'r')
-         // printf("r %x\n", addr);
-         cache_l1->request(addr,'r');
-      else if (rw == 'w')
-         // printf("w %x\n", addr);
-         cache_l1->request(addr,'w');
-      else {
-         printf("Error: Unknown request type %c.\n", rw);
-     exit(EXIT_FAILURE);
-      }
+    // Read requests from the trace file and echo them back.
+    while (fscanf(fp, "%c %x\n", &rw, &addr) == 2) {	// Stay in the loop if fscanf() successfully parsed two tokens as specified.
+        if (rw == 'r')
+            // printf("r %x\n", addr);
+            cache_l1->request(addr,'r');
+        else if (rw == 'w')
+            // printf("w %x\n", addr);
+            cache_l1->request(addr,'w');
+        else {
+            printf("Error: Unknown request type %c.\n", rw);
+        exit(EXIT_FAILURE);
+        }
 
       ///////////////////////////////////////////////////////
       // Issue the request to the L1 cache instance here.
       ///////////////////////////////////////////////////////
     }
 
-   // Cache* L2 = new Cache(params.BLOCKSIZE, params.L2_SIZE, params.L2_ASSOC);
-   // L1->next_mem_hier = L2;
     printf("===== L1 contents =====\n");
     cache_l1->print_cache_contents();
     uint32_t memory_traffic = 0;
@@ -173,7 +169,5 @@ int main (int argc, char *argv[]) {
     printf("p. L2 prefetches:              %u\n",cache_l2->cache_measurements.prefetches);
     printf("q. memory traffic:             %u\n",memory_traffic);
 
-    // printf("tag of address = %x\n",L1->get_tag(addr=addr));
-    // printf("index of address = %x\n",L1->get_index(addr=addr));
     return(0);
 }
