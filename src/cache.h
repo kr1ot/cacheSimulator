@@ -79,34 +79,34 @@ class Cache {
         //passing blocksize, cache size and associativity
         Cache(uint32_t, uint32_t, uint32_t);
 
-        //debug function to check if I'm passing and using the correct values
-        void display();
+        //print the contents of stream buffer and cache
         void print_stream_buffer_contents();
         void print_cache_contents();
  
         //calculates all the cache properties 
         void calc_cache_properties();
- 
+        void initialize_cache_params();
+    
         //calculate the tag from given address
         uint32_t get_tag(uint32_t);
- 
         //calculate the index from given address
         uint32_t get_index(uint32_t);
+        //reconstruct the address from tag and index for eviction
+        uint32_t get_addr_from_tag_index(uint32_t, uint32_t);
  
         //initialize the cache with default values
         void generate_cache();
         void generate_stream_buffer(uint32_t, uint32_t);
-        void initialize_cache_params();
 
         //handle the request from the upper level -> CPU/upper cache
         void request(uint32_t, char);
         void update_stream_buffer(bool, bool, uint32_t);
 
+        //check for misses in cache/stream buffer
         bool is_cache_miss(uint32_t, uint32_t);
         bool is_stream_buffer_miss(uint32_t);
 
         void evict_and_update_lru(uint32_t, uint32_t, uint32_t, char);
-        uint32_t get_addr_from_tag_index(uint32_t, uint32_t);
 };
 
 #endif
