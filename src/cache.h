@@ -55,10 +55,10 @@ class Cache {
         uint32_t number_of_stream_buffers;
         
         //cache properties
-        uint8_t number_of_sets; //number of sets associated to cache
-        uint8_t tag_bits;       //number of bits used for tags    
-        uint8_t index_bits;     //number of bits used for index
-        uint8_t block_offset_bits; //number of bits used for block offset
+        uint32_t number_of_sets; //number of sets associated to cache
+        uint32_t tag_bits;       //number of bits used for tags    
+        uint32_t index_bits;     //number of bits used for index
+        uint32_t block_offset_bits; //number of bits used for block offset
 
     public:
 
